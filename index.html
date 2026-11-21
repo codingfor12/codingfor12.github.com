@@ -16,6 +16,47 @@
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="images/icon.png" type="image/png" sizes="96x96" />
+
+    <style>
+        .order-modal[hidden] { display: none !important; }
+        .order-modal {
+            position: fixed; inset: 0; z-index: 9999; display: grid;
+            place-items: center; padding: 20px; background: rgba(9, 20, 39, .72);
+            overflow-y: auto;
+        }
+        .order-modal__panel {
+            position: relative; width: min(100%, 560px); max-height: min(90vh, 900px);
+            overflow-y: auto; background: #fff; color: #17243a; border-radius: 18px;
+            padding: clamp(22px, 4vw, 34px); box-shadow: 0 24px 80px rgba(0,0,0,.28);
+        }
+        .order-modal__header { padding-right: 38px; margin-bottom: 22px; }
+        .order-modal__header h2 { margin: 0 0 8px; font-size: clamp(1.35rem, 4vw, 1.8rem); }
+        .order-modal__header p { margin: 0; line-height: 1.6; color: #64748b; }
+        .order-modal__close {
+            position: absolute; top: 15px; right: 16px; width: 38px; height: 38px;
+            border: 0; border-radius: 50%; background: #f1f5f9; color: #334155;
+            font-size: 24px; line-height: 1; cursor: pointer;
+        }
+        .order-modal__grade {
+            display: inline-flex; margin-top: 12px; padding: 6px 11px; border-radius: 999px;
+            background: #eef4ff; color: #2454a6; font-size: .85rem; font-weight: 700;
+        }
+        .order-form { display: grid; gap: 14px; }
+        .order-form__field { display: grid; gap: 6px; }
+        .order-form__field label { font-size: .92rem; font-weight: 600; color: #26364d; }
+        .order-form__field input {
+            width: 100%; min-height: 46px; box-sizing: border-box; padding: 11px 13px;
+            border: 1px solid #cbd5e1; border-radius: 9px; background: #fff;
+            color: #17243a; font: inherit;
+        }
+        .order-form__field input:focus {
+            outline: 3px solid rgba(55, 118, 171, .16); border-color: #3776ab;
+        }
+        .order-form__submit { width: 100%; margin-top: 5px; cursor: pointer; }
+        .order-form__note { margin: 0; font-size: .82rem; line-height: 1.5; color: #64748b; }
+        body.order-modal-open { overflow: hidden; }
+    </style>
+
 </head>
 
 <body>
@@ -437,10 +478,7 @@ print(<span class="code-string">"Halo,"</span>, nama)
                             <li>101 halaman, softcover</li>
                             <li><strong>Termasuk ongkos cetak Rp39.000</strong></li>
                         </ul>
-                        <a href="https://wa.me/62895411654062?text=Buku%20Coding%20for%2012%2B%20Grade%20A" class="btn"
-                            target="_blank" rel="noopener noreferrer" aria-label="Pesan Buku Coding for 12+ Grade A">
-                            Beli Buku Cetak <span>→</span>
-                        </a>
+                        <button type="button" class="btn physical-book-order" data-grade="Grade A" aria-label="Pesan Buku Coding for 12+ Grade A">Beli Buku Cetak <span>→</span></button>
                         <p class="checkout-hint">(PREORDER | Dicetak dalam 4–5 hari kerja)</p>
                     </article>
 
@@ -457,10 +495,7 @@ print(<span class="code-string">"Halo,"</span>, nama)
                             <li>101 halaman, softcover</li>
                             <li><strong>Termasuk ongkos cetak Rp30.000</strong></li>
                         </ul>
-                        <a href="https://wa.me/62895411654062?text=Buku%20Coding%20for%2012%2B%20Grade%20B" class="btn"
-                            target="_blank" rel="noopener noreferrer" aria-label="Pesan Buku Coding for 12+ Grade B">
-                            Beli Buku Cetak <span>→</span>
-                        </a>
+                        <button type="button" class="btn physical-book-order" data-grade="Grade B" aria-label="Pesan Buku Coding for 12+ Grade B">Beli Buku Cetak <span>→</span></button>
                         <p class="checkout-hint">(PREORDER | Dicetak dalam 4–5 hari kerja)</p>
                     </article>
                 </div>
@@ -487,6 +522,116 @@ print(<span class="code-string">"Halo,"</span>, nama)
             <p>© 2026 Coding for 12+. Ditulis oleh Hangga Aji Sayekti.</p>
         </div>
     </footer>
+
+    <div class="order-modal" id="physicalOrderModal" hidden>
+        <section class="order-modal__panel" role="dialog" aria-modal="true"
+            aria-labelledby="physicalOrderTitle" aria-describedby="physicalOrderDescription">
+            <button type="button" class="order-modal__close" id="closePhysicalOrder"
+                aria-label="Tutup form">&times;</button>
+            <div class="order-modal__header">
+                <h2 id="physicalOrderTitle">Form Pemesanan Buku Cetak</h2>
+                <p id="physicalOrderDescription">Lengkapi alamat pengiriman. Setelah itu, Anda akan diarahkan ke WhatsApp untuk melanjutkan pemesanan.</p>
+                <span class="order-modal__grade" id="selectedBookGrade">Grade A</span>
+            </div>
+
+            <form class="order-form" id="physicalOrderForm">
+                <div class="order-form__field">
+                    <label for="orderFullName">Nama lengkap</label>
+                    <input id="orderFullName" name="fullName" type="text" autocomplete="name" required>
+                </div>
+                <div class="order-form__field">
+                    <label for="orderStreet">Jalan/Kampung/Gg</label>
+                    <input id="orderStreet" name="street" type="text" autocomplete="street-address" required>
+                </div>
+                <div class="order-form__field">
+                    <label for="orderVillage">Kelurahan</label>
+                    <input id="orderVillage" name="village" type="text" required>
+                </div>
+                <div class="order-form__field">
+                    <label for="orderDistrict">Kecamatan</label>
+                    <input id="orderDistrict" name="district" type="text" required>
+                </div>
+                <div class="order-form__field">
+                    <label for="orderCity">Kota/Kab</label>
+                    <input id="orderCity" name="city" type="text" autocomplete="address-level2" required>
+                </div>
+                <div class="order-form__field">
+                    <label for="orderProvince">Provinsi</label>
+                    <input id="orderProvince" name="province" type="text" autocomplete="address-level1" required>
+                </div>
+                <div class="order-form__field">
+                    <label for="orderPostalCode">Kode pos</label>
+                    <input id="orderPostalCode" name="postalCode" type="text" inputmode="numeric"
+                        autocomplete="postal-code" maxlength="10" required>
+                </div>
+                <button type="submit" class="btn order-form__submit">Pesan Sekarang <span>→</span></button>
+                <p class="order-form__note">Pastikan alamat sudah benar agar buku dapat dikirim ke tujuan yang tepat.</p>
+            </form>
+        </section>
+    </div>
+
+    <script>
+        (() => {
+            const modal = document.getElementById('physicalOrderModal');
+            const form = document.getElementById('physicalOrderForm');
+            const gradeLabel = document.getElementById('selectedBookGrade');
+            const closeButton = document.getElementById('closePhysicalOrder');
+            let selectedGrade = 'Grade A';
+            let previouslyFocusedElement = null;
+
+            function openOrderForm(grade) {
+                selectedGrade = grade;
+                gradeLabel.textContent = grade;
+                previouslyFocusedElement = document.activeElement;
+                modal.hidden = false;
+                document.body.classList.add('order-modal-open');
+                document.getElementById('orderFullName').focus();
+            }
+
+            function closeOrderForm() {
+                modal.hidden = true;
+                document.body.classList.remove('order-modal-open');
+                if (previouslyFocusedElement) previouslyFocusedElement.focus();
+            }
+
+            document.querySelectorAll('.physical-book-order').forEach((button) => {
+                button.addEventListener('click', () => openOrderForm(button.dataset.grade));
+            });
+
+            closeButton.addEventListener('click', closeOrderForm);
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) closeOrderForm();
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !modal.hidden) closeOrderForm();
+            });
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                if (!form.reportValidity()) return;
+
+                const data = new FormData(form);
+                const message = [
+                    'Halo, saya ingin memesan buku Coding for 12+.',
+                    '',
+                    `Pilihan buku: ${selectedGrade}`,
+                    '',
+                    'Data penerima:',
+                    `Nama lengkap: ${data.get('fullName').trim()}`,
+                    `Jalan/Kampung/Gg: ${data.get('street').trim()}`,
+                    `Kelurahan: ${data.get('village').trim()}`,
+                    `Kecamatan: ${data.get('district').trim()}`,
+                    `Kota/Kab: ${data.get('city').trim()}`,
+                    `Provinsi: ${data.get('province').trim()}`,
+                    `Kode pos: ${data.get('postalCode').trim()}`
+                ].join('\n');
+
+                const whatsappUrl = `https://wa.me/62895411654062?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+            });
+        })();
+    </script>
+
 </body>
 
 </html>
